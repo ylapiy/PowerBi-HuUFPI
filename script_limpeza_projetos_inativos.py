@@ -3,7 +3,7 @@ import os
 import glob
 
 # Pasta onde estão os CSVs (coloca o caminho entre aspas)
-pasta = r"csvs"
+pasta = r"csvs\brutos"
 
 # Opção: sobrescrever os arquivos originais (modo destrutivo)
 modo_destrutivo = False  # mude para True se quiser sobrescrever os arquivos originais
@@ -20,7 +20,7 @@ arquivos = glob.glob(os.path.join(pasta, "*.csv"))
 possiveis_colunas = ["Estado do projeto", "Status O que Aconteceu"]
 
 if not arquivos:
-    print("⚠️ Nenhum arquivo CSV encontrado na pasta informada.")
+    print("Nenhum arquivo CSV encontrado na pasta informada.")
 else:
     for arquivo in arquivos:
         try:
