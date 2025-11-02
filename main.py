@@ -9,17 +9,17 @@ from src.load import salvar_csv
 # Isso é mais profissional do que usar glob("*"), pois é explícito.
 ARQUIVOS_PARA_PROCESSAR = [
     {
-        "bruto": "data/raw/relatorio_projetos (870)(in).csv",
+        "bruto": "data/raw/brutos/relatorio_projetos (870)(in).csv",
         "limpo": "data/processed/projetos_limpo.csv",
         "removidos": "data/processed/duplicatas_removidas/projetos_duplicatas.csv"
     },
     {
-        "bruto": "data/raw/relatorio_projetos_historico(870)(in).csv",
+        "bruto": "data/raw/brutos/relatorio_projetos_historico(870)(in).csv",
         "limpo": "data/processed/historico_limpo.csv",
         "removidos": "data/processed/duplicatas_removidas/historico_duplicatas.csv"
     },
     {
-        "bruto": "data/raw/relatorio_acompanhamento_projetos (870)(in) (1).csv",
+        "bruto": "data/raw/brutos/relatorio_acompanhamento_projetos (870)(in) (1).csv",
         "limpo": "data/processed/acompanhamento_limpo.csv",
         "removidos": "data/processed/duplicatas_removidas/acompanhamento_duplicatas.csv"
     }
