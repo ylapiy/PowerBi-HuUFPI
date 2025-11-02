@@ -1,156 +1,71 @@
 import pandas as pd
-import os
-import glob
+
+def filtrar_projetos_inativos(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove linhas onde o status é 'Projeto inativo'.
+    """
+    possiveis_colunas = ["Estado do projeto", "Status O que Aconteceu"]
+    
+    coluna_status = None
+    for coluna in possiveis_colunas:
+        if coluna in df.columns:
+            coluna_status = coluna
+            break
+            
+    if not coluna_status:
+        print(f"   -> Aviso: Coluna de status não encontrada. Pulando filtro de inativos.")
+        return df  # Retorna o DataFrame original se a coluna não existir
+
+    linhas_antes = len(df)
+    df_filtrado = df[df[coluna_status] != "Projeto inativo"].copy()
+    linhas_removidas = linhas_antes - len(df_filtrado)
+
+    if linhas_removidas > 0:
+        print(f"   -> {linhas_removidas} projetos inativos removidos.")
+        
+    return df_filtrado
 
 
-class transform:
-    def __init__(self):
-        pass
+def remover_duplicatas_por_completude(df: pd.DataFrame) -> (pd.DataFrame, pd.DataFrame): # type: ignore
+    """
+    Remove duplicatas com base no título, mantendo a linha mais completa.
+    
+    Retorna dois DataFrames: (df_limpo, df_removidos)
+    """
+    possiveis_colunas_titulo = ["Título do Projeto", "Título"]
 
+    coluna_titulo = None
+    for c in possiveis_colunas_titulo:
+        if c in df.columns:
+            coluna_titulo = c
+            break
 
-    def limpar_duplicatas(self):
-        # Pasta onde estão os CSVs
-        pasta = r"PowerBi-HuUFPI/data/processed/filtrados"
+    if not coluna_titulo:
+        print(f"   -> Aviso: Coluna de título não encontrada. Pulando remoção de duplicatas.")
+        # Retorna o DF original e um DF vazio para os removidos
+        return df, pd.DataFrame(columns=df.columns)
 
-        # Nome do arquivo onde as duplicatas serão salvas
-        pasta_saida = r"PowerBi-HuUFPI/data/processed/sem_duplicatas"
-        pasta_removidos = r"PowerBi-HuUFPI/data/processed/removidos"
-        os.makedirs(pasta_saida, exist_ok=True)
-        os.makedirs(pasta_removidos, exist_ok=True)
+    # 1. Normaliza para evitar falsos positivos
+    df_copia = df.copy()
+    df_copia[coluna_titulo] = df_copia[coluna_titulo].astype(str).str.strip().str.lower()
 
-        # Possíveis nomes da coluna de título
-        possiveis_colunas_titulo = ["Título do Projeto", "Título"]
+    # 2. Calcula a "completude" (número de campos preenchidos)
+    df_copia["_completude"] = df_copia.notna().sum(axis=1)
+    
+    # 3. Ordena por completude (maior primeiro)
+    df_ordenado = df_copia.sort_values(by="_completude", ascending=False)
 
-        # Encontra todos os arquivos CSV na pasta
-        arquivos = glob.glob(os.path.join(pasta, "*.csv"))
+    # 4. Remove duplicatas, mantendo a mais completa (a 'first' após ordenar)
+    df_sem_duplicatas = df_ordenado.drop_duplicates(subset=[coluna_titulo], keep="first")
+    
+    # 5. Identifica as duplicatas que foram removidas
+    df_removidos = df_copia.loc[~df_copia.index.isin(df_sem_duplicatas.index)]
 
-        # DataFrame acumulador
-        duplicatas_resumo = []
+    # 6. Remove coluna auxiliar de ambos os DataFrames
+    df_sem_duplicatas = df_sem_duplicatas.drop(columns=["_completude"])
+    df_removidos = df_removidos.drop(columns=["_completude"], errors='ignore')
 
-        if not arquivos:
-            print("Nenhum arquivo CSV encontrado na pasta informada.")
-        else:
-            for arquivo in arquivos:
-                try:
-                    nome_arquivo = os.path.basename(arquivo)
-                    print(f"\nVerificando duplicatas em: {nome_arquivo}")
-
-                    # Detecta automaticamente o separador
-                    df = pd.read_csv(arquivo, sep=None, engine="python", encoding="utf-8")
-
-                    # Encontra qual coluna usar
-                    coluna_titulo = None
-                    for c in possiveis_colunas_titulo:
-                        if c in df.columns:
-                            coluna_titulo = c
-                            break
-
-                    if not coluna_titulo:
-                        print(f"Nenhuma coluna de título encontrada em {nome_arquivo}. Pulando arquivo.")
-                        print(f"   Colunas disponíveis: {list(df.columns)}")
-                        continue
-                    
-                    # Normaliza para evitar falsos positivos (maiúsculas, espaços, etc.)
-                    df[coluna_titulo] = df[coluna_titulo].astype(str).str.strip().str.lower()
-
-                    # Calcula a "completude" (número de campos preenchidos) para cada linha
-                    df["completude"] = df.notna().sum(axis=1)
-                    
-                    # Ordena por completude (maior primeiro)
-                    df_ordenado = df.sort_values(by ="completude", ascending=False)
-
-                    # Remove duplicatas, mantendo a mais completa
-                    df_sem_duplicatas = df_ordenado.drop_duplicates(subset=[coluna_titulo], keep="first")
-                    
-                    #Identifica as duplicatas removidas
-                    duplicatas = df.loc[~df.index.isin(df_sem_duplicatas.index)].copy()
-
-                    # Remove coluna auxiliar
-                    df_sem_duplicatas = df_sem_duplicatas.drop(columns=["completude"])
-                    duplicatas = duplicatas.drop(columns=["completude"], errors='ignore')
-                    
-                    # Caminhos de saída
-                    saida_sem_duplicatas = os.path.join(pasta_saida, nome_arquivo.replace(".csv", "_sem_duplicatas.csv"))
-                    saida_removidos = os.path.join(pasta_removidos, nome_arquivo.replace(".csv", "_duplicatas_removidas.csv"))
-                    
-                    # Salva os arquivos
-                    df_sem_duplicatas.to_csv(saida_sem_duplicatas, index=False, encoding="utf-8")
-                    duplicatas.to_csv(saida_removidos, index=False, encoding="utf-8")
-                    
-                    print(f"✅ {nome_arquivo}: {len(duplicatas)} duplicatas removidas.")
-                    print(f"   ↳ Arquivo limpo: {os.path.basename(saida_sem_duplicatas)}")
-                    print(f"   ↳ Backup dos removidos: {os.path.basename(saida_removidos)}")
-
-
-                except Exception as e:
-                    print(f"Erro ao processar {nome_arquivo}: {e}")
-
-        print("\nVerificação concluída!")
-
-
-
-
-
-
-    def limpar_projetos_inativos(self):
-        pasta = r"PowerBi-HuUFPI/data/raw/brutos"
-
-        # Opção: sobrescrever os arquivos originais (modo destrutivo)
-        modo_destrutivo = False  # mude para True se quiser sobrescrever os arquivos originais
-
-        # Cria pasta de saída (apenas se não for destrutivo)
-        if not modo_destrutivo:
-            pasta_saida = os.path.join(pasta, "filtrados")
-            os.makedirs(pasta_saida, exist_ok=True)
-
-        # Encontra todos os arquivos CSV na pasta
-        arquivos = glob.glob(os.path.join(pasta, "*.csv"))
-
-        # Possíveis nomes de coluna
-        possiveis_colunas = ["Estado do projeto", "Status O que Aconteceu"]
-
-        if not arquivos:
-            print("Nenhum arquivo CSV encontrado na pasta informada.")
-        else:
-            for arquivo in arquivos:
-                try:
-                    nome_arquivo = os.path.basename(arquivo)
-                    if modo_destrutivo:
-                        saida = arquivo  # sobrescreve o original
-                    else:
-                        saida = os.path.join(pasta_saida, nome_arquivo.replace(".csv", "_filtrado.csv"))
-
-                    print(f"\n Processando: {nome_arquivo}")
-
-                    # Detecta automaticamente o separador e lê o arquivo
-                    df = pd.read_csv(arquivo, sep=None, engine="python", encoding="utf-8")
-
-                    # Procura qual das colunas existe
-                    coluna_status = None
-                    
-                    for coluna in possiveis_colunas:
-                        if coluna in df.columns:
-                            coluna_status = coluna
-                            break
-                        
-                    if not coluna_status:
-                        print(f" Coluna de status não encontrada em {nome_arquivo}. Pulando arquivo.")
-                        continue
-                    
-                    # Filtra os projetos inativos
-
-                    linhas_antes = len(df)
-                    df_filtrado = df[df[coluna_status] != "Projeto inativo"]
-                    linhas_removidas = linhas_antes - len(df_filtrado)
-
-                    df_filtrado.to_csv(saida, index=False, encoding="utf-8")
-
-                    if modo_destrutivo:
-                        print(f" {nome_arquivo}: {linhas_removidas} linhas removidas (arquivo original sobrescrito).")
-                    else:
-                        print(f" {nome_arquivo}: {linhas_removidas} linhas removidas → salvo em 'filtrados/'")
-
-                except Exception as e:
-                    print(f" Erro ao processar {nome_arquivo}: {e}")
-
-        print("\n Processo concluído!")
+    if not df_removidos.empty:
+         print(f"   -> {len(df_removidos)} duplicatas (menos completas) removidas.")
+    
+    return df_sem_duplicatas, df_removidos
