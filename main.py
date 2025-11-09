@@ -1,9 +1,9 @@
 import os
+import sys # Recomendado adicionar para logs de erro
 from src.extract import ler_csv_bruto
 from src.transform import (
     remover_duplicatas_por_completude,
-    renomear_colunas_para_sql,
-    corrigir_tipos_de_dados 
+    processar_dataframe_para_sql  # <-- ALTERADO: Importa a nova função orquestradora
 )
 from src.load import salvar_csv, load_csv_to_postgres
 
@@ -20,7 +20,7 @@ ARQUIVOS_PARA_PROCESSAR = [
         "bruto": "data/raw/brutos/relatorio_projetos_historico(870)(in).csv",
         "limpo": "data/processed/historico_limpo.csv",
         "removidos": "data/processed/duplicatas_removidas/historico_duplicatas.csv",
-        "tabela_destino": "historico_status_projetos" # <-- MAPEAMENTO SQL
+        "tabela_destino": "projeto_historico" # <-- MAPEAMENTO SQL
     },
     {
         "bruto": "data/raw/brutos/relatorio_acompanhamento_projetos (870)(in) (1).csv",
@@ -51,43 +51,42 @@ def run_pipeline():
             print("   -> Arquivo vazio ou não encontrado. Pulando.")
             continue
 
-        # 2. TRANSFORM (Passo 1: Filtro)
-        # df_sem_inativos = filtrar_projetos_inativos(df) <--- deixar para o Bi --->
-        
-        # 2. TRANSFORM (Passo 2: Duplicatas)
+        # 2. TRANSFORM (Passo 1: Duplicatas)
         df_limpo, df_removido = remover_duplicatas_por_completude(df, config_arquivo["tabela_destino"])
 
-        # 2. TRANSFORM (Passo 3: Renomear Colunas)
-        df_sql_pronto = renomear_colunas_para_sql(df_limpo, config_arquivo["tabela_destino"])
-        
         # Sempre salva as duplicatas removidas
         if not df_removido.empty:
             salvar_csv(df_removido, config_arquivo["removidos"])
             print(f"   -> Duplicatas salvas em: {config_arquivo['removidos']}")
-
-        # Se a renomeação falhou, pula para o próximo arquivo
-        if df_sql_pronto.empty:
-            print(f"   Erro [Main]: Transformação (Renomear) para '{config_arquivo['tabela_destino']}' falhou (ver logs acima).")
+        
+        # =====================================================================
+        # 2. TRANSFORM (Passo 2: Processamento Completo)
+        #    Esta ÚNICA função agora faz:
+        #    - Renomeação de colunas
+        #    - Correção de tipos de dados (datas, números, etc.)
+        #    - Aplicação de regras customizadas (como 'numero_projeto')
+        
+        print(f"   Iniciando transformação completa para: {config_arquivo['tabela_destino']}")
+        df_processado = processar_dataframe_para_sql(df_limpo, config_arquivo['tabela_destino'])
+        
+        # Se o processamento falhou (verificando se o DF está vazio)
+        if df_processado.empty:
+            print(f"   Erro [Main]: A transformação 'processar_dataframe_para_sql' falhou para '{config_arquivo['tabela_destino']}' (ver logs acima).", file=sys.stderr)
             print(f"   -> PULANDO salvamento e carga para a tabela '{config_arquivo['tabela_destino']}'.")
             continue 
-        
-        # 2. TRANSFORM (Passo 4: Corrigir Tipos de Dados) <-- 2. ADICIONA A NOVA ETAPA
-        df_corrigido = corrigir_tipos_de_dados(df_sql_pronto, config_arquivo["tabela_destino"])
+        # =====================================================================
 
-        # Se a correção de tipos falhou, pula para o próximo arquivo
-        if df_corrigido.empty:
-            print(f"   Erro [Main]: Transformação (Correção de Tipos) para '{config_arquivo['tabela_destino']}' falhou (ver logs acima).")
-            print(f"   -> PULANDO salvamento e carga para a tabela '{config_arquivo['tabela_destino']}'.")
-            continue
-        # --------------------------------------------------------
-        
         # 3. LOAD (Passo 1: Salvar CSV intermediário)
         caminho_csv_limpo = config_arquivo["limpo"]
-        salvar_csv(df_corrigido, caminho_csv_limpo) # <-- 3. Usa df_corrigido
+        salvar_csv(df_processado, caminho_csv_limpo) # <-- Usa df_processado
         print(f"   -> Arquivo limpo salvo em: {caminho_csv_limpo}")
         
         # 4. LOAD (Passo 2: Carregar no PostgreSQL)
-        load_csv_to_postgres(caminho_csv_limpo, config_arquivo["tabela_destino"], list(df_corrigido.columns))
+        load_csv_to_postgres(
+            caminho_csv_limpo, 
+            config_arquivo["tabela_destino"], 
+            list(df_processado.columns) # <-- Usa df_processado
+        )
             
     print("\nPipeline concluído com sucesso!")
 

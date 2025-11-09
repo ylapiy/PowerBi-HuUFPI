@@ -52,7 +52,7 @@ def load_csv_to_postgres(caminho_csv: str, nome_tabela: str, df_colunas: list):
         cur.execute(f"TRUNCATE TABLE {nome_tabela} CASCADE;")
         print(f"   -> Tabela limpa.")
 
-        colunas_sql_str = f"({', '.join(df_colunas)})"
+        colunas_sql_str = f"({', '.join([f'\"{col}\"' for col in df_colunas])})"
 
         sql_copy = f"""
             COPY {nome_tabela} {colunas_sql_str}
