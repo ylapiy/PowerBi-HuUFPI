@@ -1,7 +1,5 @@
--- ================================================
--- Função: calc_tempo_em_segundos
--- Objetivo: Calcular o tempo em segundos a partir da coluna "duracao"
--- ================================================
+
+Alter table relatorio_projetos_historico add COLUMN tempo BIGINT;
 
 CREATE OR REPLACE FUNCTION calc_tempo_em_segundos()
 RETURNS trigger AS $$
@@ -17,12 +15,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- ================================================
--- Trigger: trg_update_tempo
--- Objetivo: Atualizar a coluna "tempo" automaticamente
---           sempre que "duracao" for inserida ou alterada
--- ================================================
-
 DROP TRIGGER IF EXISTS trg_update_tempo ON relatorio_projetos_historico;
 
 CREATE TRIGGER trg_update_tempo
@@ -30,3 +22,5 @@ BEFORE INSERT OR UPDATE OF duracao
 ON relatorio_projetos_historico
 FOR EACH ROW
 EXECUTE FUNCTION calc_tempo_em_segundos();
+
+UPDATE relatorio_projetos_historico set duracao = duracao;

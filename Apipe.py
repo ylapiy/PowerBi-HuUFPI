@@ -1,10 +1,8 @@
 import subprocess
-
 import os
-
+import sys
 
 arquivos = ["relatorio_projetos.csv", "relatorio_projetos_historico.csv"]
-
 pasta = "csvs/brutos"
 
 for arquivo in arquivos:
@@ -16,9 +14,9 @@ for arquivo in arquivos:
             raise FileNotFoundError(
                 f"O arquivo '{arquivo}' NÃO foi encontrado na pasta '{pasta}'."
             )
-            sys.exit()
     except FileNotFoundError as e:
         print(e)
+        sys.exit(1)  
 
 
 print("\n=== 🚀 Etapa 1: Filtrar projetos inativos ===")

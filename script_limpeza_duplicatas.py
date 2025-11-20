@@ -47,7 +47,6 @@ else:
 
             print(f"OK → Arquivo final salvo como: {os.path.basename(saida)}")
 
-            # 🔥 Agora remove o arquivo filtrado original
             os.remove(arquivo)
             print(f"🗑️ Arquivo filtrado removido: {nome}")
 

@@ -7,16 +7,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ============================
-# CONFIG
-# ============================
 PASTA_LIMPOS = "csvs/limpos"
 CONN_STR = os.getenv("DATABASE_URL")
 
 
-# ============================
-# UTIL: NORMALIZAR NOMES
-# ============================
 def normalize_name(name):
     nfkd = unicodedata.normalize("NFKD", name)
     no_accents = "".join(c for c in nfkd if not unicodedata.combining(c))
@@ -30,9 +24,6 @@ def normalize_name(name):
     return clean.lower()
 
 
-# ============================
-# LER TODOS OS CSVs LIMPOS
-# ============================
 def obter_caminhos_limpos():
     padrao = os.path.join(PASTA_LIMPOS, "*_limpo.csv")
     arquivos = glob.glob(padrao)
@@ -46,9 +37,6 @@ def obter_caminhos_limpos():
     return arquivos
 
 
-# ============================
-# CRIAR TABELA
-# ============================
 def create_table(conn, table_name, df):
     cur = conn.cursor()
 
@@ -66,9 +54,6 @@ def create_table(conn, table_name, df):
     cur.close()
 
 
-# ============================
-# INSERIR DADOS
-# ============================
 def insert_data(conn, table_name, df):
     cursor = conn.cursor()
 
@@ -97,9 +82,6 @@ def insert_data(conn, table_name, df):
     cursor.close()
 
 
-# ============================
-# PROCESSAR UM CSV
-# ============================
 def process_csv(csv_path):
     nome = os.path.basename(csv_path)
     print(f"\n📥 Lendo arquivo: {nome}")
@@ -118,9 +100,6 @@ def process_csv(csv_path):
     print(f"✔ {table_name} atualizado!")
 
 
-# ============================
-# EXECUÇÃO PRINCIPAL
-# ============================
 def main():
     arquivos = obter_caminhos_limpos()
 

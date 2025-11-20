@@ -43,6 +43,13 @@ O Power BI consome esse banco e gera dashboards analíticos com indicadores esse
 1. Pipeline de Processamento em Python
 Estrutura Geral
 
+requirements :
+
+pandas
+psycopg2-binary (psycopg2)
+python-dotenv
+DATABASE_URL = variavel local 
+
 O pipeline executa etapas de:
 
 Entrada
