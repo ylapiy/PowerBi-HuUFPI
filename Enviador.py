@@ -11,7 +11,7 @@ load_dotenv()
 # CONFIG
 # ============================
 PASTA_LIMPOS = "csvs/limpos"
-CONN_STR = os.getevn("DATABASE_STRING ")
+CONN_STR = os.getenv("DATABASE_URL")
 
 
 # ============================
