@@ -1,6 +1,17 @@
 📌 README – Pipeline de Processamento de Projetos + Dashboard Power BI (Indicadores GEP – HU-UFPI)
 🏥 Sobre o Projeto
 
+--link de vizualiação do overleaf : https://www.overleaf.com/read/drsyczzjpkbx#5538b2
+
+Grupo :
+
+Ygor Jivago 
+Vinicius Azevedo
+Augusto César
+Mateus Faria
+Talyson Machado
+Théo Alencar da Silva
+
 Este projeto foi desenvolvido como parte de um trabalho de extensão relacionado ao Hospital Universitário da Universidade Federal do Piauí (HU-UFPI).
 Ele possui duas partes integradas, que juntas criam um fluxo completo de análise de dados dos projetos do GEP (Gestão Estratégica de Projetos):
 
@@ -8,93 +19,134 @@ Pipeline em Python que trata arquivos, filtra registros, organiza nomes, padroni
 
 Dashboard em Power BI, que consome esses dados e exibe indicadores estratégicos do GEP, como andamento, situação dos projetos, distribuição por áreas, tempo médio de tramitação, entre outros.
 
-⚙️ 1. Pipeline de Processamento em Python
-🗂️ Estrutura do Processo
+Pipeline de Processamento de Projetos + Dashboard Power BI (Indicadores GEP – HU-UFPI)
+Sobre o Projeto
 
-O pipeline é dividido em três etapas principais:
+Este projeto reúne um pipeline de tratamento de dados em Python e um conjunto de dashboards desenvolvidos no Power BI. O objetivo é organizar, limpar, padronizar e analisar os dados relacionados aos projetos geridos pelo GEP (Gestão Estratégica de Projetos) do HU-UFPI, oferecendo uma visão clara e confiável para decisão estratégica.
 
-1. Entrada
+O fluxo completo funciona assim:
+
+Entrada
 
 O usuário insere arquivos CSV brutos na pasta:
 
 csvs/brutos/
 
-Esses arquivos vêm do HU-UFPI e podem conter inconsistências, repetições, acentos, colunas mal formatadas etc.
+Esses arquivos vêm do HU-UFPI e podem conter inconsistências, repetições, acentos, colunas mal formatadas etc. - > Sempre são esperados os arquivos relatorio_projetos_historico.csv e relatorio_projetos.csv
 
-2. Filtragem / Limpeza
+Os arquivos são tratados, organizados e filtrados via scripts em Python.
 
-Scripts Python processam esses arquivos, gerando arquivos “limpos” já padronizados:
+Os dados são enviados automaticamente para um banco PostgreSQL hospedado na Neon.
 
-csvs/limpos/
-nome_original_filtrado_limpo.csv
+O Power BI consome esse banco e gera dashboards analíticos com indicadores essenciais.
 
-A limpeza inclui:
+1. Pipeline de Processamento em Python
+Estrutura Geral
 
-Remoção de inativos
+O pipeline executa etapas de:
 
-Normalização de acentuação
+Entrada
+Leitura dos arquivos brutos (.csv) contendo informações dos projetos e seus históricos.
 
-Padronização dos nomes das colunas
+Tratamento
+• Limpeza de colunas
+• Remoção de duplicatas
+• Filtragem de registros inválidos
+• Ajuste de colunas de tempo
+• Criação de estruturas padronizadas
+• Organização do output em múltiplas pastas (limpos, sem duplicatas etc.)
 
-Remoção de caracteres especiais
+Envio para o Banco
+Finalizando o processamento, os dados são enviados automaticamente para um banco PostgreSQL/Neon, que é a fonte principal do Power BI.
 
-Eliminação de duplicatas
+Scripts incluídos
 
-Conversão de datas quando necessário
+script_limpeza_duplicatas.py – remove duplicidades nos registros.
 
-3. Envio para o Banco (Enviador.py)
+script_limpeza_projetos_inativos.py – filtra projetos inativos ou inválidos.
 
-O arquivo Enviador.py lê automaticamente todos os CSVs que terminam com \_limpo.csv e executa:
+Apipe.py – pipeline geral de processamento.
 
-✔ Criação da tabela correspondente no PostgreSQL (com CREATE TABLE IF NOT EXISTS)
-✔ TRUNCATE antes de inserir, para garantir dados atualizados
-✔ Inserção linha por linha com tratamento de erros
-✔ Normalização automática do nome das colunas
-✔ Geração automática dos nomes das tabelas com base no arquivo
+Enviador.py – integração com o banco de dados.
 
-A conexão é feita através de uma CONN_STR, protegida via .env, seguindo boas práticas de segurança.
+update_tempo_trigger.sql – trigger SQL para manter a coluna “tempo” sempre atualizada conforme alterações na coluna “duracao”. (caso um novo banco seja criado esse script deve ser carregado manualmnte, pois ão faz parte da pipeline)
 
-📁 Estrutura Recomendada de Pastas
-projeto/
-│── csvs/
-│ ├── brutos/
-│ └── limpos/
-│── Enviador.py
-│── limpeza_duplicatas.py
-|── limpeza_projetos_inativos.py
-│── Apipe.py
-│── .env
-│── .gitignore
-│── README.md
+Estrutura de Pastas
+csvs/
+ ├── brutos/
+ ├── limpos/
+ └── sem_duplicatas/
 
-🔐 Segurança (Uso do .env)
+dashboards/
+ ├── versões antigas/
+ └── versões novas/
 
-A string de conexão fica armazenada em:
+*.py
+*.sql
+README.md
 
-.env
+2. Dashboard em Power BI
 
-Exemplo:
+Após o carregamento no PostgreSQL, o Power BI lê a base atualizada e monta os painéis de indicadores do GEP.
 
-CONN_STR="postgresql://usuario:senha@host/banco?sslmode=require"
+Objetivo do Dashboard
 
-E o .gitignore contém:
+Dar aos gestores do HU-UFPI uma visão rápida e precisa sobre o andamento dos projetos institucionais. O painel auxilia tanto o acompanhamento operacional quanto decisões estratégicas.
 
-.env
+Indicadores disponíveis (ou previstos)
 
-para evitar exposição dos dados sensíveis.
+Quantidade total de projetos
 
-📊 2. Dashboard em Power BI — Indicadores GEP (HU-UFPI)
+Projetos ativos, concluídos e inativos
 
-Após o carregamento dos dados no PostgreSQL/Neon, o Power BI acessa essas tabelas e constrói um painel visual com os indicadores essenciais da gestão de projetos.
+Tempo médio de tramitação
 
-🎯 Objetivo do Dashboard
+Distribuição por área / categoria
 
-Fornecer aos gestores e analistas do HU-UFPI uma visão clara sobre:
+Evolução temporal dos registros
 
-(Ainda vou escrever)
+Histórico de movimentação dos projetos
 
-O painel ajuda a tomada de decisão e facilita o acompanhamento contínuo da execução dos projetos institucionais.
+Análises de produtividade
 
-📌 Indicadores Comuns no Painel (exemplos)
+Comparações entre períodos
 
-(Ainda vou escrever)
+Banco de Dados
+
+O sistema utiliza PostgreSQL (Neon), e parte da lógica do banco é automatizada com triggers
+SQL.
+O arquivo update_tempo_trigger.sql garante que qualquer alteração na coluna duracao reflita corretamente no campo tempo em segundos.
+
+Como Executar
+
+Coloque seus arquivos brutos em csvs/brutos.
+
+Execute o pipeline (ex.: python Apipe.py).
+
+Os arquivos tratados serão gerados nas respectivas pastas.
+
+O Enviador.py cuidará do envio ao PostgreSQL.
+
+Abra o Power BI e atualize o dashboard conectado ao banco.
+
+Observações
+
+Os dashboards possuem versões antiga e nova dentro da pasta dashboards/.
+
+Os arquivos .pbix já estão configurados para ler do PostgreSQL.
+
+O projeto é modular, permitindo expansão futura para novas regras, novos datasets ou automação contínua.
+
+3. Artigo 
+
+Este projeto faz parte do estudo “Integração de ETL em Python e Power BI para Gestão Estratégica de Projetos Institucionais no Hospital Universitário da UFPI”, no qual desenvolvemos uma solução completa de Business Intelligence para monitoramento dos projetos vinculados ao HU-UFPI.
+
+O artigo apresenta o contexto de fragmentação informacional existente no hospital e descreve como a equipe desenvolveu um fluxo end-to-end de dados, composto por:
+
+ETL automatizado em Python, responsável por coletar, limpar, padronizar e consolidar dados provenientes de planilhas institucionais;
+
+Modelagem e armazenamento em um banco de dados relacional (PostgreSQL/Neon);
+
+Dashboards interativos em Power BI, exibindo indicadores como classificação dos projetos, evolução temporal, participação multicêntrica, tipos de estudo, andamento processual e produtos previstos.
+
+O estudo demonstra que a solução implementada melhora a governança da informação, reduz inconsistências presentes nas planilhas brutas, aumenta a transparência e fortalece a tomada de decisão baseada em evidências dentro do HU-UFPI. O pipeline proposto também se mostra escalável, replicável e adequado às demandas analíticas de hospitais universitários.

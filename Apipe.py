@@ -16,6 +16,7 @@ for arquivo in arquivos:
             raise FileNotFoundError(
                 f"O arquivo '{arquivo}' NÃO foi encontrado na pasta '{pasta}'."
             )
+            sys.exit()
     except FileNotFoundError as e:
         print(e)
 
