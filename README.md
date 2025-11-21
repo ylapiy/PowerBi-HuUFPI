@@ -2,6 +2,7 @@
 🏥 Sobre o Projeto
 
 --link de vizualiação do overleaf : https://www.overleaf.com/read/drsyczzjpkbx#5538b2
+--link do figma dos backgrounds do dashboard: https://www.figma.com/design/tKAsslPqXc3p4NGdN0NToi/Untitled?node-id=0-1&t=H44goxyDAcPkJirC-1
 
 Grupo :
 
