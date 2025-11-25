@@ -1,6 +1,8 @@
 📌 README – Pipeline de Processamento de Projetos + Dashboard Power BI (Indicadores GEP – HU-UFPI)
 🏥 Sobre o Projeto
 
+--trello da equipe : https://trello.com/b/aVCCMVP4/super-power-bi-excel-dados-python
+
 --link de vizualiação do overleaf : https://www.overleaf.com/read/drsyczzjpkbx#5538b2
 
 --link do figma dos backgrounds do dashboard: https://www.figma.com/design/tKAsslPqXc3p4NGdN0NToi/Untitled?node-id=0-1&t=H44goxyDAcPkJirC-1
